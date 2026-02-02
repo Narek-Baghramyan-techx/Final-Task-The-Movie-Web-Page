@@ -3,33 +3,35 @@
     <head>
         <title>The Movie Web Page</title>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width initial-scale=1.0" />
-        <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro' rel='stylesheet' type='text/css'>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700' rel='stylesheet' type='text/css'>
         <link rel="stylesheet" href="main.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     </head>
     <body>
         <header>
             <nav class="nav-content">
                 <nav class="main-nav">
-                    <a><img src="icons/main-logo.svg" alt="Logo." /></a>
+                    <a><img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" alt="TMDB Logo" /></a>
                     <ul>
-                        <li><a>Movies</a></li>
-                        <li><a>TV Shows</a></li>
-                        <li><a>People</a></li>
-                        <li><a>More</a></li>
+                        <li><a href="#">Movies</a></li>
+                        <li><a href="#">TV Shows</a></li>
+                        <li><a href="#">People</a></li>
+                        <li><a href="#">More</a></li>
                     </ul>
                 </nav>
                 <nav class="secondary-nav">
                     <ul>
                         <li><a><i class="fa-solid fa-plus"></i></a></li>
                         <li><a class="language">EN</a></li>
-                        <li><a>Login</a></li>
-                        <li><a>Join TMDB</a></li>
-                        <li><a><img src="icons/search-icon.svg" /></a></li>
+                        <li><a href="#">Login</a></li>
+                        <li><a href="#">Join TMDB</a></li>
+                        <li><a><i class="fa-solid fa-search" style="color: #01b4e4;"></i></a></li>
                     </ul>
                 </nav>
             </nav>
         </header>
+
         <main>
             <h1 class="main-title">Popular Movies</h1>
             <section>
@@ -37,11 +39,11 @@
                     <div class="sort">
                         <div class="title" id="sort-menu">
                             <p>Sort</p>
-                            <span>></span>
+                            <i class="fa-solid fa-chevron-down"></i>
                         </div>
-                        <div class="selection">
+                        <div class="selection"> 
                             <p>Sort Results By</p>
-                            <select name="movie-sort">
+                            <select name="movie-sort" id="sort-select">
                                 <option value="popularity.desc">Popularity Descending</option>
                                 <option value="popularity.asc">Popularity Ascending</option>
                                 <option value="vote_average.desc">Rating Descending</option>
@@ -53,71 +55,174 @@
                             </select>
                         </div>
                     </div>
+
                     <div class="filter">
                         <div class="title" id="filter-menu">
                             <p>Filters</p>
-                            <span>></span>
+                            <i class="fa-solid fa-chevron-down"></i>
                         </div>
                         <div class="selection">
-                            <div class="release-dates">
-                                <p>Release Dates</p>
+                            <!-- Release Dates -->
+                            <div class="filter-section">
+                                <p class="filter-label">Release Dates</p>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" id="search-all-releases" checked>
+                                    <span>Search all releases?</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" id="search-all-countries" checked>
+                                    <span>Search all countries?</span>
+                                </label>
+                                
+                                <div id="country-selector" class="country-selector" style="display: none;">
+                                    <select id="country-select" class="scrollable-select">
+                                        <option value="">Loading countries...</option>
+                                    </select>
+                                    <div id="release-types" style="margin-top: 12px;">
+                                        <label class="checkbox-option">
+                                            <input type="checkbox" class="release-type" value="1" checked>
+                                            <span>Premiere</span>
+                                        </label>
+                                        <label class="checkbox-option">
+                                            <input type="checkbox" class="release-type" value="2" checked>
+                                            <span>Theatrical (limited)</span>
+                                        </label>
+                                        <label class="checkbox-option">
+                                            <input type="checkbox" class="release-type" value="3" checked>
+                                            <span>Theatrical</span>
+                                        </label>
+                                        <label class="checkbox-option">
+                                            <input type="checkbox" class="release-type" value="4" checked>
+                                            <span>Digital</span>
+                                        </label>
+                                        <label class="checkbox-option">
+                                            <input type="checkbox" class="release-type" value="5" checked>
+                                            <span>Physical</span>
+                                        </label>
+                                        <label class="checkbox-option">
+                                            <input type="checkbox" class="release-type" value="6" checked>
+                                            <span>TV</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="date-inputs">
+                                    <div class="date-field">
+                                        <label>from</label>
+                                        <input type="date" id="release-from" class="date-input">
+                                    </div>
+                                    <div class="date-field">
+                                        <label>to</label>
+                                        <input type="date" id="release-to" class="date-input">
+                                    </div>
+                                </div>
                             </div>
-                            <div class="genres"></div>
-                            <div class="keywords">
-                                <p>Keywords</p>
-                                <input type="text" placeholder="Filter by keywords..." />
+
+                            <!-- Genres -->
+                            <div class="filter-section">
+                                <p class="filter-label">Genres</p>
+                                <div id="genres-container" class="genres-grid"></div>
+                            </div>
+
+                            <!-- User Score -->
+                            <div class="filter-section">
+                                <p class="filter-label">User Score</p>
+                                <div class="dual-range-container">
+                                    <div class="dual-range-track" id="score-track"></div>
+                                    <input type="range" id="score-min" class="dual-range-input" min="0" max="10" value="0" step="1">
+                                    <input type="range" id="score-max" class="dual-range-input" min="0" max="10" value="10" step="1">
+                                    <div class="range-labels">
+                                        <span>0</span>
+                                        <span>5</span>
+                                        <span>10</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Minimum User Votes -->
+                            <div class="filter-section">
+                                <p class="filter-label">Minimum User Votes</p>
+                                <div class="dual-range-container">
+                                    <div class="dual-range-track" id="votes-track"></div>
+                                    <input type="range" id="vote-min" class="dual-range-input" min="0" max="500" value="0" step="50">
+                                    <input type="range" id="vote-max" class="dual-range-input" min="0" max="500" value="500" step="50">
+                                    <div class="range-labels">
+                                        <span>0</span>
+                                        <span>100</span>
+                                        <span>200</span>
+                                        <span>300</span>
+                                        <span>400</span>
+                                        <span>500</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Runtime -->
+                            <div class="filter-section">
+                                <p class="filter-label">Runtime</p>
+                                <div class="dual-range-container">
+                                    <div class="dual-range-track" id="runtime-track"></div>
+                                    <input type="range" id="runtime-min" class="dual-range-input" min="0" max="400" value="0" step="15">
+                                    <input type="range" id="runtime-max" class="dual-range-input" min="0" max="400" value="400" step="15">
+                                    <div class="range-labels">
+                                        <span>0</span>
+                                        <span>120</span>
+                                        <span>240</span>
+                                        <span>360</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Keywords -->
+                            <div class="filter-section">
+                                <p class="filter-label">Keywords</p>
+                                <div class="keywords-container" id="keywords-container"></div>
+                                <input type="text" id="keywords-input" class="filter-input" placeholder="Filter by keywords..." />
                             </div>
                         </div>
                     </div>
-                    <button disabled class="search-button">Search</button>
-                    <button class="big-button">Search</button>
+
+                    <button id="search-trigger" class="search-button button-active">Search</button>
                 </div>
-                <div>
-                    <div class="movie-cards"></div>
-                    <button class="load-more button-active">Load more</button>
+
+                <div style="flex: 1;">
+                    <div class="movie-cards" id="movie-grid">
+                        </div>
+                    <button id="load-more-btn" class="load-more">Load more</button>
                 </div>
             </section>
         </main>
+
         <footer>
-            <div class="community">
-                <img src="icons/footer-logo.svg" alt="Logo." />
-                <button>JOIN THE COMMUNITY</button>
-            </div>
-            <div>
-                <h2>THE BASICS</h2>
-                <ul>
-                    <li><a href="">About TMDB</a></li>
-                    <li><a href="">Contact Us</a></li>
-                    <li><a href="">API Documentation</a></li>
-                    <li><a href="">API Business</a></li>
-                    <li><a href="">System Status</a></li>
-                </ul>
-            </div>
-            <div>
-                <h2>GET INVOLVED</h2>
-                <ul>
-                    <li><a href="">Contribution Bible</a></li>
-                    <li><a href="">Add New Movie</a></li>
-                    <li><a href="">Add New TV Show</a></li>
-                </ul>
-            </div>
-            <div>
-                <h2>COMMUNITY</h2>
-                <ul>
-                    <li><a href="">Guidelines</a></li>
-                    <li><a href="">Discussions</a></li>
-                    <li><a href="">Leaderboard</a></li>
-                    <li><a href="">Support Forums</a></li>
-                </ul>
-            </div>
-            <div>
-                <h2>LEGAL</h2>
-                <ul>
-                    <li><a href="">Terms of Use</a></li>
-                    <li><a href="">API Terms of Use</a></li>
-                    <li><a href="">Privacy Police</a></li>
-                    <li><a href="">DMCA Policy</a></li>
-                </ul>
+            <div class="footer-content">
+                <div class="community">
+                    <img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg" alt="Logo" style="width: 80px; height: auto; top:0;" />
+                    <button>JOIN THE COMMUNITY</button>
+                </div>
+                <div>
+                    <h2>THE BASICS</h2>
+                    <ul>
+                        <li><a href="#">About TMDB</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">API Documentation</a></li>
+                        <li><a href="#">System Status</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h2>GET INVOLVED</h2>
+                    <ul>
+                        <li><a href="#">Contribution Bible</a></li>
+                        <li><a href="#">Add New Movie</a></li>
+                        <li><a href="#">Add New TV Show</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h2>LEGAL</h2>
+                    <ul>
+                        <li><a href="#">Terms of Use</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                    </ul>
+                </div>
             </div>
         </footer>
     </body>
