@@ -42,9 +42,12 @@ const loadMoreBtn = document.getElementById('load-more-btn');
 const sortSelect = document.getElementById('sort-select');
 const searchBtn = document.getElementById('search-trigger');
 
-/**
- * Country code to flag emoji mapping
- */
+// Filter-change tracking
+let filtersChanged = false;
+let filtersSnapshot = null;
+
+//  Country code to flag emoji mapping
+ 
 function getCountryFlag(countryCode) {
   const codePoints = countryCode
     .toUpperCase()
@@ -53,9 +56,8 @@ function getCountryFlag(countryCode) {
   return String.fromCodePoint(...codePoints);
 }
 
-/**
- * Fetch countries from TMDB API
- */
+// Fetch countries from TMDB API
+ 
 async function fetchCountries() {
   if (countriesCache) {
     return countriesCache;
@@ -74,9 +76,8 @@ async function fetchCountries() {
   }
 }
 
-/**
- * Populate countries dropdown
- */
+// Populate countries dropdown
+
 async function populateCountries() {
   const countrySelect = document.getElementById('country-select');
   const countries = await fetchCountries();
@@ -96,9 +97,9 @@ async function populateCountries() {
   });
 }
 
-/**
- * Search keywords from TMDB API
- */
+
+// Search keywords from TMDB API
+
 async function searchKeywords(query) {
   if (!query || query.length < 2) return [];
   
@@ -112,29 +113,31 @@ async function searchKeywords(query) {
   }
 }
 
-/**
- * Add keyword tag to UI
- */
+
+// Add keyword tag to UI
+
 function addKeywordTag(keyword) {
   if (selectedKeywords.find(k => k.id === keyword.id)) {
-    return; // Already added
+    return; 
   }
   
   selectedKeywords.push(keyword);
   renderKeywordTags();
+  try { checkFiltersChanged(); } catch(e) { /* noop during init */ }
 }
 
-/**
- * Remove keyword tag
- */
+
+// Remove keyword tag
+
 function removeKeyword(keywordId) {
   selectedKeywords = selectedKeywords.filter(k => k.id !== keywordId);
   renderKeywordTags();
+  try { checkFiltersChanged(); } catch(e) { /* noop during init */ }
 }
 
-/**
- * Render keyword tags
- */
+
+// Render keyword tags
+
 function renderKeywordTags() {
   const container = document.getElementById('keywords-container');
   container.innerHTML = selectedKeywords.map(keyword => `
@@ -145,9 +148,9 @@ function renderKeywordTags() {
   `).join('');
 }
 
-/**
- * Setup keywords autocomplete
- */
+
+// Setup keywords autocomplete
+
 function setupKeywordsAutocomplete() {
   const input = document.getElementById('keywords-input');
   const container = document.getElementById('keywords-container');
@@ -224,9 +227,81 @@ function setupKeywordsAutocomplete() {
   });
 }
 
-/**
- * Render genres as toggleable buttons
- */
+// Filter snapshot / change detection helpers 
+function getFiltersState() {
+  const scoreMin = document.getElementById('score-min').value;
+  const scoreMax = document.getElementById('score-max').value;
+  const voteMin = document.getElementById('vote-min').value;
+  const voteMax = document.getElementById('vote-max').value;
+  const runtimeMin = document.getElementById('runtime-min').value;
+  const runtimeMax = document.getElementById('runtime-max').value;
+  const releaseFrom = document.getElementById('release-from').value;
+  const releaseTo = document.getElementById('release-to').value;
+  const searchAllCountries = document.getElementById('search-all-countries').checked;
+  const searchAllReleases = document.getElementById('search-all-releases').checked;
+  const countryEl = document.getElementById('country-select');
+  const country = countryEl ? countryEl.value : '';
+  const releaseTypes = Array.from(document.querySelectorAll('.release-type:checked')).map(cb => cb.value).sort();
+
+  return {
+    sort: sortSelect.value,
+    scoreMin, scoreMax, voteMin, voteMax, runtimeMin, runtimeMax,
+    releaseFrom, releaseTo,
+    searchAllCountries, searchAllReleases, country,
+    selectedGenres: [...selectedGenres].slice().sort(),
+    selectedKeywords: selectedKeywords.map(k => k.id).slice().sort(),
+    releaseTypes
+  };
+}
+
+function takeFiltersSnapshot() {
+  try {
+    filtersSnapshot = JSON.stringify(getFiltersState());
+    filtersChanged = false;
+    updateFloatingButton();
+  } catch (e) {
+    // ignore during early init
+  }
+}
+
+function checkFiltersChanged() {
+  if (!filtersSnapshot) return false;
+  let changed = false;
+  try {
+    changed = JSON.stringify(getFiltersState()) !== filtersSnapshot;
+  } catch (e) {
+    changed = false;
+  }
+  filtersChanged = changed;
+  updateFloatingButton();
+  return changed;
+}
+
+function isElementFullyVisible(el) {
+  if (!el) return false;
+  const rect = el.getBoundingClientRect();
+  return rect.top >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight);
+}
+
+function updateFloatingButton() {
+  if (!filtersChanged) {
+    searchBtn.classList.remove('floating');
+    document.body.classList.remove('with-floating');
+    return;
+  }
+
+  if (!isElementFullyVisible(searchBtn)) {
+    searchBtn.classList.add('floating');
+    document.body.classList.add('with-floating');
+  } else {
+    searchBtn.classList.remove('floating');
+    document.body.classList.remove('with-floating');
+  }
+}
+
+
+// Render genres as toggleable buttons
+
 function renderGenres() {
   const container = document.getElementById('genres-container');
   container.innerHTML = genres.map(genre => `
@@ -243,22 +318,22 @@ function renderGenres() {
       } else {
         selectedGenres.push(genreId);
       }
+      try { checkFiltersChanged(); } catch(e) { }
     }
   });
 }
 
-/**
- * Get selected release types
- */
+
+// Get selected release types
+
 function getSelectedReleaseTypes() {
   const checkboxes = document.querySelectorAll('.release-type:checked');
   const types = Array.from(checkboxes).map(cb => cb.value);
   return types.length > 0 ? types.join('|') : '';
 }
 
-/**
- * Fetch movies from API with all filters
- */
+// Fetch movies from API with all filters
+ 
 async function fetchMovies(page, append = false) {
   if (isFetching) return;
   isFetching = true;
@@ -353,27 +428,25 @@ async function fetchMovies(page, append = false) {
   }
 }
 
-/**
- * Determine rating color class
- */
+
+// Determine rating color class
+
 function getRatingColor(rating) {
     if (rating >= 7) return 'green';
     if (rating >= 4) return 'yellow';
     return 'red';
 }
 
-/**
- * Format Date to "MMM DD, YYYY"
- */
+// Format Date to "MMM DD, YYYY"
+ 
 function formatDate(dateString) {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-/**
- * Generate HTML for a single movie card
- */
+// Generate HTML for a single movie card
+ 
 function createMovieCard(movie) {
     const card = document.createElement('div');
     card.className = 'movie-card';
@@ -384,7 +457,7 @@ function createMovieCard(movie) {
         card.classList.add('horizontal');
     }
 
-    // Calculate rating percentage (e.g., 7.5 -> 75)
+    // Calculate rating percentage 
     const ratingPercent = Math.round(movie.vote_average * 10);
     const colorClass = getRatingColor(movie.vote_average);
     const poster = movie.poster_path ? `${IMAGE_PATH}${movie.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Image';
@@ -432,9 +505,9 @@ function createMovieCard(movie) {
     return card;
 }
 
-/**
- * Render movies to the DOM
- */
+
+// Render movies to the DOM
+
 function renderMovies(movies, append = false) {
     if (!append) {
         movieGrid.innerHTML = ''; // Clear grid if new search
@@ -458,9 +531,7 @@ function renderMovies(movies, append = false) {
 // Store current movies for re-rendering on resize
 let currentMovies = [];
 
-/**
- * Handle window resize to switch between layouts
- */
+// Handle window resize to switch between layouts
 let resizeTimeout;
 window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
@@ -471,9 +542,8 @@ window.addEventListener('resize', () => {
     }, 250);
 });
 
-/**
- * Setup dual range sliders
- */
+// Setup dual range sliders
+ 
 function setupDualRange(minId, maxId, trackId, min, max) {
   const minSlider = document.getElementById(minId);
   const maxSlider = document.getElementById(maxId);
@@ -515,9 +585,8 @@ function setupDualRange(minId, maxId, trackId, min, max) {
   updateTrack();
 }
 
-/**
- * Setup event listeners
- */
+// Setup event listeners
+
 function setupEventListeners() {
   // Search all countries toggle
   const searchAllCountries = document.getElementById('search-all-countries');
@@ -597,11 +666,25 @@ function setupEventListeners() {
     sortMenu.querySelector('i').className = 'fa-solid fa-chevron-right';
     filterMenu.querySelector('i').className = 'fa-solid fa-chevron-right';
   }
+
+  // Monitor user interactions inside the filters panel to detect changes
+  const filtersContainer = document.querySelector('.filters');
+  if (filtersContainer) {
+    ['input', 'change', 'click'].forEach(evt => {
+      filtersContainer.addEventListener(evt, (ev) => {
+        if (ev.target === searchBtn) return;
+        checkFiltersChanged();
+      }, { passive: true });
+    });
+  }
+
+  // Re-evaluate floating button on scroll/resize (in case button goes out of view)
+  window.addEventListener('scroll', () => updateFloatingButton());
+  window.addEventListener('resize', () => updateFloatingButton());
 }
 
-/**
- * Event Handlers
- */
+// Event Handlers
+ 
 async function handleLoadMore() {
     currentPage++;
     loadMoreBtn.textContent = 'Loading...';
@@ -624,6 +707,7 @@ async function handleSearch() {
 
     searchBtn.textContent = 'Search';
     movieGrid.style.opacity = '1';
+    try { takeFiltersSnapshot(); } catch (e) { }
 }
 
 // Initialize
@@ -643,3 +727,10 @@ async function handleSearch() {
 
 // Make removeKeyword globally accessible
 window.removeKeyword = removeKeyword;
+
+// After initial rendering we should snapshot the current filters state
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    try { takeFiltersSnapshot(); } catch (e) { }
+  }, 300);
+});
